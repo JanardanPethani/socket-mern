@@ -3,7 +3,7 @@ import {
   register,
   login,
   logout,
-  updateProfilePic,
+  updateProfile,
 } from "../controllers/auth.controller.js";
 import { auth } from "../middleware/auth.js";
 import { profilePicUpload } from "../lib/multer.js";
@@ -19,7 +19,7 @@ router.post("/login", login);
 // Logout route (protected)
 router.post("/logout", auth, logout);
 
-// Update profile picture (protected) with file upload error handling
-router.put("/profile/picture", auth, profilePicUpload, updateProfilePic);
+// Update profile (protected) - handles both profile data and profile picture updates
+router.put("/profile", auth, profilePicUpload, updateProfile);
 
 export default router;

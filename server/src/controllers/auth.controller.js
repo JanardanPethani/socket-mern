@@ -1,5 +1,5 @@
 import User from "../models/User.model.js";
-import { uploadImage } from "../lib/cloudinary.js";
+import { uploadImage, deleteImage } from "../lib/cloudinary.js";
 import { generateToken } from "../lib/jwt.js";
 import { bufferToDataURI } from "../lib/multer.js";
 
@@ -17,12 +17,15 @@ export const register = async (req, res) => {
 
     // Upload profile picture if provided
     let profilePicUrl = null;
+    let profilePicPublicId = null;
     if (profilePic) {
       // Convert buffer to data URI using our helper
       const dataURI = bufferToDataURI(profilePic.mimetype, profilePic.buffer);
 
       // Apply compression options for profile pictures
-      profilePicUrl = await uploadImage(dataURI);
+      const { url, publicId } = await uploadImage(dataURI);
+      profilePicUrl = url;
+      profilePicPublicId = publicId;
     }
 
     // Create new user
@@ -31,6 +34,7 @@ export const register = async (req, res) => {
       email,
       password,
       profilePic: profilePicUrl,
+      profilePicPublicId,
     });
 
     // Generate JWT token
@@ -81,32 +85,95 @@ export const login = async (req, res) => {
   }
 };
 
-// Update profile picture
-export const updateProfilePic = async (req, res) => {
+// Update user profile (combines profile data and profile picture updates)
+export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body;
+    const { username, email } = req.body;
+    const profilePic = req.file;
+    const userId = req.user._id;
 
-    if (!profilePic) {
-      return res.status(400).json({ message: "Profile picture is required" });
+    // Create an object with the fields to update
+    const updateFields = {};
+
+    // Handle profile data updates (username, email)
+    if (username || email) {
+      // Check if username or email is already taken by another user
+      const existingUser = await User.findOne({
+        $and: [
+          { _id: { $ne: userId } },
+          {
+            $or: [
+              ...(username ? [{ username }] : []),
+              ...(email ? [{ email }] : []),
+            ],
+          },
+        ],
+      });
+
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Username or email is already taken",
+        });
+      }
+
+      // Add fields to the update object
+      if (username) updateFields.username = username;
+      if (email) updateFields.email = email;
     }
 
-    // Upload new profile picture with compression
-    const profilePicUrl = await uploadImage(profilePic);
+    const currentUser = await User.findById(userId);
+    if (!currentUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Handle profile picture upload
+    if (profilePic) {
+      // Get the current user to access their existing profile picture
+      const oldProfilePicPublicId = currentUser
+        ? currentUser.profilePicPublicId
+        : null;
 
-    // Update user's profile picture
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { profilePic: profilePicUrl },
-      { new: true, runValidators: true }
-    );
+      // Convert buffer to data URI using our helper
+      const dataURI = bufferToDataURI(profilePic.mimetype, profilePic.buffer);
+
+      // Upload and get the image URL
+      const { url, publicId } = await uploadImage(dataURI);
+
+      // Add profile picture URL to update fields
+      updateFields.profilePic = url;
+      updateFields.profilePicPublicId = publicId;
+
+      try {
+        if (oldProfilePicPublicId) {
+          await deleteImage(oldProfilePicPublicId);
+          console.log(`Deleted old profile picture: ${oldProfilePicPublicId}`);
+        }
+      } catch (deleteError) {
+        console.error("Error deleting old profile picture:", deleteError);
+      }
+    }
+
+    // If no fields to update
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    // Update user profile
+    const user = await User.findByIdAndUpdate(userId, updateFields, {
+      new: true,
+      runValidators: true,
+    });
 
     res.json({
-      message: "Profile picture updated successfully",
+      message: "Profile updated successfully",
       user: user.profile,
     });
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({ message: "Validation error", errors });
+    }
     res.status(500).json({
-      message: "Error updating profile picture",
+      message: "Error updating profile",
       error: error.message,
     });
   }
