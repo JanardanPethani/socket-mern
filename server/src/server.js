@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error(err.stack);
   res.status(500).json({
     error: "Something went wrong!",
@@ -44,7 +44,7 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 
   // Connect to MongoDB
-  connectDB().catch((err) => {
+  connectDB().catch(() => {
     process.exit(1);
   });
 });

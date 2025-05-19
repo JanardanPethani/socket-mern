@@ -196,3 +196,14 @@ export const logout = async (req, res) => {
       .json({ message: "Error logging out", error: error.message });
   }
 };
+
+// Check if user is authenticated
+export const checkAuth = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.status(200).json(user.profile);
+    // eslint-disable-next-line no-unused-vars
+  } catch (error) {
+    res.status(401).json({ message: "Token is not valid" });
+  }
+};

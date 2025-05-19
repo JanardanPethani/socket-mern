@@ -4,6 +4,7 @@ import {
   login,
   logout,
   updateProfile,
+  checkAuth,
 } from "../controllers/auth.controller.js";
 import { auth } from "../middleware/auth.js";
 import { profilePicUpload } from "../lib/multer.js";
@@ -21,5 +22,7 @@ router.post("/logout", auth, logout);
 
 // Update profile (protected) - handles both profile data and profile picture updates
 router.put("/profile", auth, profilePicUpload, updateProfile);
+
+router.get("/check", auth, checkAuth);
 
 export default router;
