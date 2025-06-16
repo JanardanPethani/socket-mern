@@ -4,7 +4,9 @@ import cors from "cors";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import { connectDB, disconnectDB } from "./lib/db.js";
+
 import authRoutes from "./routes/auth.route.js";
+import messageRoutes from "./routes/messages.route.js";
 
 // Create Express app
 const app = express();
@@ -24,6 +26,7 @@ app.use(morgan("dev")); // Logging middleware
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Basic route
 app.get("/", (req, res) => {

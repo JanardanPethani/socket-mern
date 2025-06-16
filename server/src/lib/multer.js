@@ -31,6 +31,14 @@ const multipleImagesUpload = multer({
   fileFilter: imageFileFilter,
 }).array("images", 5);
 
+export const singleImageUpload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max size
+  },
+  fileFilter: imageFileFilter,
+}).single("image");
+
 // Helper to convert buffer to data URI
 export const bufferToDataURI = (mimetype, buffer) => {
   const b64 = Buffer.from(buffer).toString("base64");
