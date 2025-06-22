@@ -12,7 +12,10 @@ export const register = async (req, res) => {
     // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({
+        success: false,
+        message: "User already exists",
+      });
     }
 
     // Upload profile picture if provided
@@ -42,17 +45,24 @@ export const register = async (req, res) => {
     await user.save();
 
     res.status(201).json({
+      success: true,
       message: "User registered successfully",
       user: user.profile,
     });
   } catch (error) {
     if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ message: "Validation error", errors });
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors,
+      });
     }
-    res
-      .status(500)
-      .json({ message: "Error registering user", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error registering user",
+      error: error.message,
+    });
   }
 };
 
@@ -64,24 +74,35 @@ export const login = async (req, res) => {
     // Find user by email and include password
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
     }
 
     // Generate JWT token
     generateToken(user._id, res);
 
     res.json({
+      success: true,
       message: "Login successful",
       user: user.profile,
     });
   } catch (error) {
-    res.status(500).json({ message: "Error logging in", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error logging in",
+      error: error.message,
+    });
   }
 };
 
@@ -112,6 +133,7 @@ export const updateProfile = async (req, res) => {
 
       if (existingUser) {
         return res.status(400).json({
+          success: false,
           message: "Username or email is already taken",
         });
       }
@@ -123,7 +145,10 @@ export const updateProfile = async (req, res) => {
 
     const currentUser = await User.findById(userId);
     if (!currentUser) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
     }
     // Handle profile picture upload
     if (profilePic) {
@@ -154,7 +179,10 @@ export const updateProfile = async (req, res) => {
 
     // If no fields to update
     if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ message: "No fields to update" });
+      return res.status(400).json({
+        success: false,
+        message: "No fields to update",
+      });
     }
 
     // Update user profile
@@ -164,15 +192,21 @@ export const updateProfile = async (req, res) => {
     });
 
     res.json({
+      success: true,
       message: "Profile updated successfully",
       user: user.profile,
     });
   } catch (error) {
     if (error.name === "ValidationError") {
       const errors = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({ message: "Validation error", errors });
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors,
+      });
     }
     res.status(500).json({
+      success: false,
       message: "Error updating profile",
       error: error.message,
     });
@@ -189,11 +223,16 @@ export const logout = async (req, res) => {
       secure: process.env.NODE_ENV !== "development",
     });
 
-    res.json({ message: "Logout successful" });
+    res.json({
+      success: true,
+      message: "Logout successful",
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error logging out", error: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Error logging out",
+      error: error.message,
+    });
   }
 };
 
@@ -201,9 +240,22 @@ export const logout = async (req, res) => {
 export const checkAuth = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    res.status(200).json(user.profile);
-    // eslint-disable-next-line no-unused-vars
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      user: user.profile,
+    });
   } catch (error) {
-    res.status(401).json({ message: "Token is not valid" });
+    console.error("Error checking auth:", error);
+    res.status(401).json({
+      success: false,
+      message: "Token is not valid",
+    });
   }
 };

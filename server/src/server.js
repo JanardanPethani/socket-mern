@@ -34,11 +34,35 @@ app.get("/", (req, res) => {
 });
 
 // Error handling middleware
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: process.env.NODE_ENV === "development" ? err.message : undefined,
+
+  // Default error status and message
+  const statusCode = err.statusCode || 500;
+  const message = err.message || "Something went wrong!";
+
+  // Structured error response
+  const errorResponse = {
+    success: false,
+    message,
+  };
+
+  // Add detailed error info in development
+  if (process.env.NODE_ENV === "development") {
+    errorResponse.error = err.toString();
+    errorResponse.stack = err.stack;
+  }
+
+  res.status(statusCode).json(errorResponse);
+
+  next();
+});
+
+// 404 handler - must be after all routes
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Resource not found",
   });
 });
 

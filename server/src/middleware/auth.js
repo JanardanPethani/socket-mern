@@ -7,9 +7,10 @@ export const auth = async (req, res, next) => {
     const token = req.cookies.jwt;
 
     if (!token) {
-      return res
-        .status(401)
-        .json({ message: "No token, authorization denied" });
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required. Please login.",
+      });
     }
 
     // Verify token
@@ -18,14 +19,35 @@ export const auth = async (req, res, next) => {
     // Find user
     const user = await User.findById(decoded.userId);
     if (!user) {
-      return res.status(401).json({ message: "Token is not valid" });
+      return res.status(401).json({
+        success: false,
+        message: "User not found or session expired. Please login again.",
+      });
     }
 
     // Add user to request
     req.user = user;
     next();
-    // eslint-disable-next-line no-unused-vars
   } catch (error) {
-    res.status(401).json({ message: "Token is not valid" });
+    console.error("Auth middleware error:", error.message);
+
+    if (error.name === "JsonWebTokenError") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid token. Please login again.",
+      });
+    }
+
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({
+        success: false,
+        message: "Session expired. Please login again.",
+      });
+    }
+
+    res.status(401).json({
+      success: false,
+      message: "Authentication failed. Please login again.",
+    });
   }
 };

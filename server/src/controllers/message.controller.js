@@ -13,7 +13,11 @@ export const getUsersListForSidebar = async (req, res) => {
     res.status(200).json(usersExceptLoggedInUser.map((user) => user.profile));
   } catch (err) {
     console.error("Error in getUsersListForSidebar: ", err.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch users",
+      error: err.message,
+    });
   }
 };
 
@@ -32,7 +36,11 @@ export const getMessages = async (req, res) => {
     res.status(200).json(messages);
   } catch (err) {
     console.error("Error in getMessages: ", err.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch messages",
+      error: err.message,
+    });
   }
 };
 
@@ -40,8 +48,15 @@ export const sendMessage = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
     const { userId } = req.params;
-    const { message } = req.body;
+    const { content } = req.body;
     const image = req.file;
+
+    if (!content && !image) {
+      return res.status(400).json({
+        success: false,
+        message: "Message content or image is required",
+      });
+    }
 
     let imageUrl = null;
     let imagePublicId = null;
@@ -56,7 +71,7 @@ export const sendMessage = async (req, res) => {
     const newMessage = new Message({
       sender: loggedInUserId,
       receiver: userId,
-      message,
+      content,
       imageUrl,
       imagePublicId,
     });
@@ -66,7 +81,11 @@ export const sendMessage = async (req, res) => {
     res.status(201).json(newMessage);
   } catch (err) {
     console.error("Error in sendMessage: ", err.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to send message",
+      error: err.message,
+    });
   }
 };
 
@@ -77,18 +96,31 @@ export const deleteMessage = async (req, res) => {
 
     const message = await Message.findById(messageId);
     if (!message) {
-      return res.status(404).json({ message: "Message not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Message not found",
+      });
     }
 
     if (message.sender.toString() !== loggedInUserId.toString()) {
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own messages",
+      });
     }
 
     await Message.findByIdAndDelete(messageId);
 
-    res.status(200).json({ message: "Message deleted successfully" });
+    res.status(200).json({
+      success: true,
+      message: "Message deleted successfully",
+    });
   } catch (err) {
     console.error("Error in deleteMessage: ", err.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete message",
+      error: err.message,
+    });
   }
 };
