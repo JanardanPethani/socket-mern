@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import { Moon, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,28 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/components/ThemeProvider";
 
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  menuMode?: boolean;
+}
+
+export function ThemeToggle({ menuMode }: ThemeToggleProps) {
   const { setTheme } = useTheme();
+
+  if (menuMode) {
+    return (
+      <>
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          Light
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          Dark
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          System
+        </DropdownMenuItem>
+      </>
+    );
+  }
 
   return (
     <DropdownMenu>

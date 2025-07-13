@@ -25,7 +25,7 @@ export function AuthLayout() {
           <div className="max-w-md w-full px-6 max-h-screen overflow-y-auto py-8">
             <div className="md:hidden mb-8 text-center">
               <h1 className="text-3xl font-bold text-foreground mb-2">
-                Welcome to MySpace
+                <SplitText text="Welcome to MySpace" />
               </h1>
               <p className="text-muted-foreground text-sm">
                 Connect with friends and share your moments

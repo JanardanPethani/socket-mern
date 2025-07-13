@@ -9,21 +9,30 @@ export function ChatMessage({ message, isMe }: ChatMessageProps) {
   return (
     <div
       className={cn(
-        "flex flex-col max-w-[70%] mb-2",
+        "flex flex-col max-w-[75%] mb-1",
         isMe ? "ml-auto items-end" : "items-start"
       )}
+      aria-label={isMe ? "Your message" : "Received message"}
     >
       <div
         className={cn(
-          "rounded-lg px-4 py-2 text-sm shadow-sm",
+          "rounded-2xl px-4 py-2 text-sm shadow-sm relative",
           isMe
-            ? "bg-primary text-primary-foreground rounded-br-none"
-            : "bg-muted text-foreground rounded-bl-none"
+            ? "bg-primary text-primary-foreground rounded-br-md border border-primary/70"
+            : "bg-muted text-foreground rounded-bl-md border border-border"
         )}
+        tabIndex={0}
+        aria-live="polite"
       >
         {message.text}
       </div>
-      <span className="text-xs text-muted-foreground mt-1">
+      <span
+        className={cn(
+          "text-xs mt-1 select-none",
+          isMe ? "text-primary/70 pr-1" : "text-muted-foreground pl-1"
+        )}
+        aria-label="Message timestamp"
+      >
         {message.timestamp}
       </span>
     </div>
