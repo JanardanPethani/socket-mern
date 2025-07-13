@@ -5,6 +5,8 @@ import {
   logout,
   updateProfile,
   checkAuth,
+  forgotPassword,
+  resetPassword,
 } from "../controllers/auth.controller.js";
 import { auth } from "../middleware/auth.js";
 import { profilePicUpload } from "../lib/multer.js";
@@ -24,5 +26,9 @@ router.post("/logout", auth, logout);
 router.put("/profile", auth, profilePicUpload, updateProfile);
 
 router.get("/check", auth, checkAuth);
+
+// Forgot password and reset password
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;

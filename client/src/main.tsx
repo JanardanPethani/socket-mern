@@ -14,8 +14,14 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { ProtectedRoute, AuthRoute } from "./components/ProtectedRoute";
 import { AuthLayout } from "./layouts/AuthLayout";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 
 const router = createBrowserRouter([
+  {
+    path: "/reset-password",
+    element: <ResetPasswordPage />,
+  },
   {
     path: "/",
     element: <App />,
@@ -38,17 +44,6 @@ const router = createBrowserRouter([
               {
                 path: "settings",
                 element: <SettingsPage />,
-              },
-              {
-                path: "messages",
-                element: (
-                  <div className="p-4 bg-card rounded-lg border border-border">
-                    <h1 className="text-2xl font-bold mb-4">Messages</h1>
-                    <p className="text-muted-foreground">
-                      This feature is coming soon.
-                    </p>
-                  </div>
-                ),
               },
               {
                 path: "friends",
@@ -123,6 +118,14 @@ const router = createBrowserRouter([
               {
                 path: "signup",
                 element: <SignupPage />,
+              },
+              {
+                path: "forgot-password",
+                element: <ForgotPasswordPage />,
+              },
+              {
+                path: "reset-password",
+                element: <ResetPasswordPage />,
               },
             ],
           },

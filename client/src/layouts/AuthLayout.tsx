@@ -1,4 +1,4 @@
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import SplitText from "@/components/animated/SplitText";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -32,11 +32,6 @@ export function AuthLayout() {
               </p>
             </div>
             <Outlet />
-            <div className="mt-8 text-center text-sm text-muted-foreground">
-              <Link to="/" className="text-primary hover:underline">
-                Return to home page
-              </Link>
-            </div>
           </div>
         </div>
       </div>

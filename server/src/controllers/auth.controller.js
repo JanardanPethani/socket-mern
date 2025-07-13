@@ -2,6 +2,8 @@ import User from "../models/User.model.js";
 import { uploadImage, deleteImage } from "../lib/cloudinary.js";
 import { generateToken } from "../lib/jwt.js";
 import { bufferToDataURI } from "../lib/multer.js";
+import { sendEmail } from "../lib/resend.js";
+import crypto from "crypto";
 
 // Register a new user
 export const register = async (req, res) => {
@@ -256,6 +258,77 @@ export const checkAuth = async (req, res) => {
     res.status(401).json({
       success: false,
       message: "Token is not valid",
+    });
+  }
+};
+
+// Forgot Password - send reset link
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No user found with that email address",
+      });
+    }
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + 60 * 60 * 1000; // 1 hour
+    await user.save();
+
+    // Send email
+    const resetUrl = `http://localhost:5173/reset-password?token=${token}`;
+    const html = `<p>You requested a password reset.</p><p>Click <a href='${resetUrl}'>here</a> to reset your password. This link will expire in 1 hour.</p>`;
+    await sendEmail({
+      to: user.email,
+      subject: "Password Reset Request",
+      html,
+    });
+
+    res.json({
+      success: true,
+      message: "Password reset link sent to your email.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error sending password reset email",
+      error: error.message,
+    });
+  }
+};
+
+// Reset Password - set new password
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() },
+    });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired password reset token",
+      });
+    }
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+    res.json({
+      success: true,
+      message: "Password has been reset successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Error resetting password",
+      error: error.message,
     });
   }
 };

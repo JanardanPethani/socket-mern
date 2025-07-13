@@ -104,6 +104,14 @@ export function LoginPage() {
               <Input type="password" placeholder="••••••••" {...field} />
             </FormControl>
             <FormMessage />
+            <div className="text-right mt-1">
+              <Link
+                to="/auth/forgot-password"
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </FormItem>
         )}
       />
